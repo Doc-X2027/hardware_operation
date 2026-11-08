@@ -1,0 +1,4 @@
+__pycache__/
+*.pyo
+/camera_*.jpg
+/usb_*.jpg

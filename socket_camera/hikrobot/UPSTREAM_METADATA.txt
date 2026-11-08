@@ -1,0 +1,166 @@
+Metadata-Version: 2.4
+Name: hikrobot-sdk
+Version: 0.1.1
+Summary: Python wrapper for Hikrobot MVS cameras
+Author-email: Yuvjeet <yuvjeet.work@gmail.com>
+License: MIT
+Project-URL: Homepage, https://github.com/Yuvjeet/hikrobot-sdk
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Dynamic: license-file
+
+# Hikrobot SDK – Python Wrapper
+
+A lightweight, Pythonic wrapper around the **Hikrobot (Hikvision Industrial) MVS Camera SDK**, simplifying device enumeration, camera detection, frame grabbing, and pixel format conversion.
+
+This package includes a wrapper for the official **MvCameraControl** SDK through the `MvImport` Python bindings.
+
+---
+
+## ⭐ Features
+
+- Thread-safe device enumeration  
+- Device list caching for performance  
+- Find camera by serial number  
+- Simple `CameraDevice` lifecycle  
+- Raw frame grabbing (`MV_CC_GetOneFrameTimeout`)  
+- Convert frames to RGB  
+- Supports **GigE** & **USB3** Hikrobot cameras  
+- Set camera parameters (int, float, bool, enum, command)
+
+---
+
+## 📦 Installation
+
+> **Note:** The official **Hikrobot MVS SDK** must be installed separately.
+
+Install via pip:
+
+```bash
+pip install hikrobot-sdk
+```
+
+### Ensure the Hikrobot SDK is installed:
+
+- **Linux:** `/opt/MVS/`
+- **Windows:** `C:\Program Files\MVS\Development\`
+
+---
+
+## 📁 Package Structure
+
+```
+hikrobot/
+│
+├── hikrobot_sdk.py
+└── MvImport/
+    ├── MvCameraControl_class.py
+    └── (other Hikrobot SDK Python files)
+```
+
+---
+
+## 🚀 Quick Start
+
+### 🔍 Enumerate Devices
+
+```python
+from hikrobot import DeviceManager
+
+devices = DeviceManager.enumerate()
+print("Devices found:", devices.nDeviceNum)
+```
+
+---
+
+### 🎯 Find a Camera by Serial Number
+
+```python
+from hikrobot import DeviceManager
+
+device_info = DeviceManager.find_camera("YOUR_CAMERA_SN")
+
+if device_info:
+    print("Camera found")
+else:
+    print("Camera not found")
+```
+
+---
+
+### 📷 Open Camera and Grab a Frame
+
+```python
+from hikrobot import CameraDevice, DeviceManager
+
+device_info = DeviceManager.find_camera("YOUR_CAMERA_SN")
+cam = CameraDevice(device_info)
+
+if cam.create_handle_and_open():
+    cam.start_grabbing()
+
+    frame = cam.get_one_frame(1000)
+    if frame:
+        raw_bytes, info = frame
+        print("Frame:", info.nWidth, "x", info.nHeight)
+
+    cam.stop_grabbing()
+    cam.close_and_destroy()
+```
+
+---
+
+### 🎨 Convert Raw Frame to RGB
+
+```python
+raw_bytes, info = cam.get_one_frame()
+rgb_bytes = cam.convert_to_rgb(raw_bytes, info)
+```
+
+---
+
+### 🔧 Set Camera Parameters
+
+```python
+cam.set_value("ExposureTime", 12000)
+cam.set_value("Gain", 5)
+cam.set_value("TriggerMode", 1)
+```
+
+---
+
+## 🧠 Class Overview
+
+### DeviceManager
+
+- Thread-safe device scanning  
+- Caches device list  
+- Extracts serial numbers for GigE & USB cameras  
+
+**Methods:**
+- `enumerate()`
+- `find_camera(serial_number)`
+- `refresh()`
+
+---
+
+### CameraDevice
+
+- High-level wrapper around `MvCamera` instance  
+
+**Methods:**
+- `create_handle_and_open()`
+- `start_grabbing()`
+- `stop_grabbing()`
+- `get_one_frame(timeout_ms)`
+- `convert_to_rgb(raw_bytes, frame_info)`
+- `close_and_destroy()`
+- `set_value(name, value)`
+- `_register_exception_callback()`
+
+---
+
+## 📄 License
+
+MIT License.

@@ -1,0 +1,1 @@
+from .hikrobot_sdk import DeviceManager, CameraDevice
