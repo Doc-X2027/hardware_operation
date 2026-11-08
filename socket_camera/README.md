@@ -1,6 +1,6 @@
 # 网络相机调用
 
-此目录包含源项目的两种网络调用方式，它们并非同一个接口。
+此目录包含源项目的两种网络调用方式，它们并非同一个接口。当前 Linux 电脑请使用 [socket_camera_linux](../socket_camera_linux/README.md) 中的 Aravis 取流脚本；该路径已通过真实取流验证，窗口使用 GTK 原生滚轮缩放。此目录保留原 MVS 调用方式。
 
 ## 本机 TCP 服务：`hikvision.py`
 

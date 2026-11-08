@@ -1,0 +1,6 @@
+{
+  "camera_ip": "192.168.34.55",
+  "timeout_ms": 3000,
+  "max_failures": 5,
+  "buffers": 8
+}
