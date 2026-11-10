@@ -1,17 +1,19 @@
+> 2026-11-10 外接 USB 相机已重新确认：`icspring camera`，VID:PID `2993:0858`，序列号 `20240307110322`，当前 `/dev/video4`。默认按身份选择，不再使用内置索引 0；下方旧记录中索引 0 的 PASS 仅表示内置相机返回了数据，不能证明外接相机可用。
+
 # 硬件系统说明
 
 本仓库存放 AUBO 机械臂、网络相机、USB 相机和三轴力传感器的调用脚本。下表中的地址、通道和版本来自原项目代码及本机已有文件；未确认项表示目前没有可核实的信息，不根据 IP 地址或图像尺寸推测设备型号。检测结果仅代表记录时的环境；历史记录与最新 Linux 取流结果分别注明。
 
 | 硬件 | 型号 | 接口及当前配置 | 必要软件与驱动 | 调用目录 | Windows 适配 | Linux 适配 |
 | --- | --- | --- | --- | --- | --- | --- |
-| AUBO 机械臂 | 未确认 | RPC `192.168.34.10:30004` | AUBO SDK 0.26.0rc6；Python 3.12 绑定 | [aubo_robot](aubo_robot/README.md) | 历史记录：RPC 端口连接成功；未执行运动 | 初次 RPC 超时，网络修复后未复测；仓库绑定为 Windows `.pyd`，控制功能需另配 Linux SDK |
-| 网络相机 | `MV-CU060-10GC`，SN `DA7251168` | GigE `192.168.34.55`；可选旧 TCP 服务 `127.0.0.1:8888` | Windows：MVS；Linux：Aravis 0.8、GTK 3/PyGObject/Cairo、OpenCV、NumPy | [Windows/MVS](socket_camera/README.md)、[Linux/Aravis](socket_camera_linux/README.md) | 历史记录：GigE 取帧成功；可选 TCP 服务未运行 | 真实取流通过：3072×2048，约 14.7 FPS；GTK 预览通过 |
-| USB 相机 | 系统标识见本次自检记录 | 本机内置索引 `0`、外接索引 `4` | OpenCV、NumPy | [usb_camera](usb_camera/README.md) | 历史记录：取帧成功（640×480） | 本次索引 0、4 均取帧成功，详见下表 |
+| AUBO 机械臂 | 未确认 | RPC `192.168.34.10:30004` | AUBO SDK 0.26.0rc6；Python 3.12 绑定 | [aubo_robot](aubo_robot/README.md) | 历史记录：RPC 端口连接成功；未执行运动 | 2026-11-09 RPC 超时；仓库绑定为 Windows `.pyd`，控制功能需另配 Linux SDK |
+| 网络相机 | `MV-CU060-10GC`，SN `DA7251168` | GigE `192.168.34.55`；可选旧 TCP 服务 `127.0.0.1:8888` | Windows：MVS；Linux：Aravis 0.8、GTK 3/PyGObject/Cairo、OpenCV、NumPy | [Windows/MVS](socket_camera/README.md)、[Linux/Aravis](socket_camera_linux/README.md) | 历史记录：GigE 取帧成功；可选 TCP 服务未运行 | 历史真实取流通过；2026-11-09 Aravis 依赖通过，设备无法连接 |
+| USB 相机 | 系统标识见本次自检记录 | 本机内置索引 `0`、外接索引 `4` | OpenCV、NumPy；Linux 预览另需 GTK 3/PyGObject/Cairo | [Windows](usb_camera/README.md)、[Linux](usb_camera_linux/README.md) | 历史记录：取帧成功（640×480） | 2026-11-09 索引 0 取帧成功；索引 4 为历史记录 |
 | 三轴力传感器及 ART-DAQ 采集卡 | 传感器及采集卡型号均未确认 | `Dev1/ai0`、`ai1`、`ai2`；1000 Hz；默认 `20 N/V` | ART-DAQ 驱动；仓库含 Python 库、x64 DLL、Python 3.12 编译版传感器模块 | [force_sensor](force_sensor/README.md) | 历史记录：库可加载，`Dev1` 无法访问 | 当前仓库的 ART-DAQ 库仅支持 Windows |
 
 网络相机的 TCP 服务与 GigE 取流代码可能属于同一物理相机的不同调用链；源项目没有足够资料确认它们的设备对应关系。传感器量程、零点条件、相机标定和机械臂安全轨迹也需要按现场设备确认。
 
-> 最新状态：Linux Aravis 路径已实现真实取流，见文末“Linux 独立取流入口”。下方初次检测中的 MVS 加载失败属于原 `self_check.py` 路径，不代表新取流脚本失败。
+> 自检已按平台选择 GigE 后端：Windows 使用 MVS，Linux 使用 Aravis。2026-11-09 复检结果见下文；历史检测结果不代表设备当前在线。
 
 ## 初次硬件自检（2026-11-08，北京时间）
 
@@ -40,76 +42,117 @@
 | `socket_camera/hikrobot_stream.py` | 海康 GigE 预览、参数查询和图像保存 |
 | `socket_camera_linux/run.sh` | Linux Aravis 取流入口，支持 GTK 预览、无窗口采集和保存 |
 | `socket_camera/hikvision.py` | 旧项目 TCP 相机服务客户端；仓库未包含服务端 |
-| `usb_camera/control.py` | USB 拍照及颜色识别 |
+| `usb_camera/control.py` | Windows USB 拍照、持续取流及滚轮缩放 |
+| `usb_camera_linux/control.py` | Linux USB 拍照、GTK 取流及滚轮缩放 |
 | `force_sensor/control.py` | 三轴力单次、平均及连续读取 |
 
-原始集成/力控实验脚本仍有缺失依赖，详见各目录 README。USB 识别坐标为像素坐标，不能直接作为机械臂坐标；力传感器适配器补齐的三个力矩分量为零，不是真实六维测量。
+原始集成/力控实验脚本仍有缺失依赖，详见各目录 README。力传感器适配器补齐的三个力矩分量为零，不是真实六维测量。
 
 ## 快速自检
 
-从仓库根目录运行：
+Linux 使用系统 Python；Aravis 检查自动加载 `socket_camera_linux/lib` 中的本地库，未安装本地库时使用系统库：
 
-```powershell
-py -3.12 self_check.py --skip-force
+```bash
+# 离线检查入口文件和相机依赖，不连接硬件
+/usr/bin/python3 self_check.py --offline
+
+# 检查设备，力传感器在 Linux 自动跳过
+/usr/bin/python3 self_check.py
+
+# 只检查 USB，相机索引按实际设备选择
+/usr/bin/python3 self_check.py --skip-robot --skip-gige --skip-force
+
+# 多台 USB 相机、图形环境检查、JSON 输出
+/usr/bin/python3 self_check.py --skip-robot --skip-gige --skip-force --check-preview --json
 ```
 
-脚本检查仓库文件、AUBO RPC 端口、GigE 相机取帧及 USB 相机取帧。力传感器未接入时使用 `--skip-force`；接入后去掉该参数即可读取一次数据。本机 TCP 相机服务是可选检查，需使用 `--check-camera-service` 才会探测其端口。GigE 取帧时会临时关闭触发模式，并在结束后恢复原值。脚本不会让机械臂上电或运动，也不会向 TCP 相机服务发送拍照命令。力传感器检查不做零点校准。TCP 连接、GigE 单帧等待及力采集子进程默认超时为 5 秒，可用 `--timeout 10` 调整；该参数不限制 USB 取帧或整个自检过程。`PASS` 为检查通过，`FAIL` 为检查失败，`SKIP` 为当前环境或模式未执行。存在 `FAIL` 时退出码为 1。
+索引 `4` 是此前外接相机的记录，不保证当前存在；可先查看 `ls /dev/video*`，视频节点数量不等于物理相机数量。Linux 依赖安装参见 [GigE](socket_camera_linux/README.md) 和 [USB](usb_camera_linux/README.md)。
 
-没有接入设备时可检查文件和脚本自身：
-
-```powershell
-py -3.12 self_check.py --offline
-py -3.12 self_check.py --offline --json
-```
-
-设备地址或索引不同可覆盖默认值，例如：
-
-```powershell
-py -3.12 self_check.py --robot-ip 192.168.34.11 --gige-ip 192.168.34.56 --usb-index 1
-```
-
-运行完整自检前，需在所用 Python 3.12 环境安装相机和力传感器 Python 依赖，并安装对应硬件驱动：
+Windows 在 PowerShell 中使用 x64 Python 3.12，以匹配仓库的 AUBO 和力传感器二进制：
 
 ```powershell
 py -3.12 -m pip install -r .\socket_camera\requirements-camera.txt
 py -3.12 -m pip install -r .\usb_camera\requirements.txt
 py -3.12 -m pip install -r .\force_sensor\requirements.txt
+py -3.12 self_check.py --offline
+py -3.12 self_check.py --skip-force --usb-index 1
 ```
 
-Linux 使用 `python3` 运行；本机已具备 USB 取帧所需依赖。检查本次发现的外接 USB 相机：
+Windows GigE 需要安装 MVS，力传感器需要 ART-DAQ 驱动及 `Dev1`；pip 依赖不能替代设备驱动。力传感器接入后去掉 `--skip-force`，读取一次三轴数据，不做零点校准。
 
-```bash
-python3 self_check.py --usb-index 4 --check-camera-service
-```
+默认检查仓库入口文件、运行环境、相机依赖、AUBO RPC 端口、GigE 单帧、USB 单帧及力传感器读数。`--skip-gige`、`--skip-usb` 同时跳过该相机的依赖检查；文件完整性始终检查。Linux 不要求 Windows 专属 `.pyd`、DLL 或 `.pyc` 存在；Windows 会额外检查这些文件。SDK 平台匹配不代表 SDK 导入、登录或驱动访问已验证。
 
-该命令仍会检查机械臂和 GigE 相机；当前力传感器会因平台限制自动跳过。Windows `.pyd`、DLL 及现有力传感器加载器不能直接在 Linux 使用。
+自检不会让机械臂上电或运动，不向旧 TCP 相机服务发送拍照命令，不修改主机网络配置。GigE 取帧会临时关闭触发模式，Aravis 还会临时设置连续采集模式；正常退出尝试恢复。超时强制终止时无法保证恢复，重新采集前应核对相机模式。
 
-## 自检参数
+## 自检参数与结果
 
 | 参数 | 默认值 | 说明 |
 | --- | --- | --- |
-| `--offline` | 关闭 | 仅检查必需文件并报告运行环境 |
-| `--skip-force` | 关闭 | 主动跳过力传感器读取 |
+| `--offline` | 关闭 | 检查入口文件和依赖，跳过所有硬件连接 |
+| `--skip-robot` | 关闭 | 跳过机械臂 RPC 端口 |
+| `--skip-gige` | 关闭 | 跳过 GigE 依赖和取帧 |
+| `--skip-usb` | 关闭 | 跳过 USB 依赖和取帧 |
+| `--skip-force` | 关闭 | 跳过力传感器读取 |
+| `--check-preview` | 关闭 | 检查 GTK/显示服务或创建 Windows OpenCV 测试窗口；不验证鼠标操作 |
 | `--check-camera-service` | 关闭 | 检查可选 TCP 服务端口，不发送拍照命令 |
-| `--json` | 关闭 | 以 JSON 输出检查结果；库的诊断日志可能另行输出 |
+| `--json` | 关闭 | 标准输出为 JSON 数组；SDK 日志被子进程捕获 |
 | `--robot-ip` / `--robot-port` | `192.168.34.10` / `30004` | 机械臂 RPC 目标 |
-| `--socket-host` / `--socket-port` | `127.0.0.1` / `8888` | TCP 相机服务目标 |
+| `--socket-host` / `--socket-port` | `127.0.0.1` / `8888` | 旧 TCP 相机服务目标 |
 | `--gige-ip` | `192.168.34.55` | GigE 相机目标 |
-| `--usb-index` | `0` | OpenCV 设备索引，需大于或等于 0 |
-| `--timeout` | `5.0` 秒 | TCP、GigE 单帧和力采集等待时间，必须大于 0 |
+| `--gige-backend` | `auto` | Linux 自动使用 `aravis`，其他平台使用 `mvs`；可显式指定 |
+| `--usb-index` | 未指定 | Linux 按 `usb_camera_linux/config.json` 匹配外接相机；Windows 必须明确指定索引。Linux 显式索引也必须匹配目标身份 |
+| `--timeout` | `5.0` 秒 | 每项 TCP 连接或检查子进程的超时上限，必须为有限正数 |
 
-`PASS` 仅表示对应检查通过：RPC 端口可连接不等于 SDK 登录、机械臂状态或运动能力已验证；单帧成功不等于完成标定或长期稳定性验证。全部通过或仅有跳过项时退出码为 0，参数错误退出码为 2。
+检查按顺序执行，`--timeout` 不是整个自检的总时长。USB、MVS、Aravis 和依赖检查运行在独立子进程中，超时或原生库崩溃记为 FAIL 后继续其他项目。Aravis 子进程固定使用 `/usr/bin/python3`，加载其配置文件中的帧等待/重试设置；外层 `--timeout` 限制整个子进程。其他检查使用启动自检的 Python，推荐 Linux 全程使用系统 Python。DNS 解析可能受操作系统解析器超时影响，现场地址推荐直接使用 IP。
 
-## 本次故障排查与复检
+`--offline --check-preview` 仍会检查图形环境，但不连接相机。SSH/无图形桌面下不要指定 `--check-preview`，拍摄和无窗口取流不需要显示服务。仅检查文件与运行环境可使用 `--offline --skip-usb --skip-gige`。
 
-1. **网络状态**：初次检测时访问相机走无线网卡；现已给有线接口 `enp0s31f6` 应用 `192.168.34.20/24`，相机流量通过有线接口直连。相机真实取流已通过，机械臂 RPC 尚未在网络修复后复测，不能据此认定机械臂可用。重连后用 `ip route get 192.168.34.55` 核对路由。
-2. **GigE 取流路径**：本机 Linux 使用 `socket_camera_linux/run.sh`，无需 MVS。`self_check.py` 仍使用原 MVS 封装，未接入 Aravis；该脚本的 SDK 加载失败不代表 Linux 新取流脚本失败。若使用原 MVS 路径，则仍需安装对应 SDK 并配置 `MVCAM_COMMON_RUNENV`。
-3. **TCP 服务**：只有使用旧项目 TCP 调用链时才需要启动服务端；本仓库仅含客户端。若只使用 GigE 直连，可不加 `--check-camera-service`。
-4. **USB 相机选择**：当前默认索引 0 是内置摄像头，外接 `icspring camera` 使用索引 4。应用中通过 `--index 4` 指定，自检中通过 `--usb-index 4` 指定；重新插拔后核对索引。
-5. **力传感器**：在 Windows x64 / Python 3.12 下安装 ART-DAQ 驱动和 Python 依赖，确认设备管理工具中存在 `Dev1` 及三路输入，再去掉 `--skip-force` 复检。当前 Linux 环境需要另行适配驱动及传感器实现。
+| 状态/退出码 | 含义 |
+| --- | --- |
+| PASS | 对应检查通过；端口连通不等于 SDK 登录成功，单帧成功不等于长期取流稳定或已标定 |
+| FAIL | 文件、依赖、连接或读取失败，或检查超时/崩溃 |
+| SKIP | 主动跳过、平台不支持、离线模式，或前置依赖失败后跳过设备；不表示硬件可用 |
+| 退出码 0 | 没有 FAIL，可能包含 SKIP |
+| 退出码 1 | 至少一个 FAIL |
+| 退出码 2 | 命令行参数错误 |
 
-各硬件的具体控制指令、坐标单位和使用限制见对应目录的说明。未确认的机械臂、相机、传感器和采集卡具体型号，需根据设备铭牌或厂商设备管理工具补录。
+JSON 保留数组结构，每项包含 `item`、`status`、`detail`；USB 项名称带索引。例如：
 
+```json
+[{"item": "USB 相机 [0]", "status": "PASS", "detail": "设备索引 0，图像 1920x1080"}]
+```
+
+## 最新复检（2026-11-09，北京时间）
+
+执行 `/usr/bin/python3 self_check.py --skip-force --check-preview --timeout 10 --json`，退出码 **1**：
+
+| 检查项 | 结果 | 详情 |
+| --- | --- | --- |
+| 仓库文件、运行环境 | PASS | Linux x64，系统 Python 3.10.12 |
+| USB 依赖 | PASS | OpenCV 4.5.4、NumPy 1.21.5 |
+| GigE 依赖 | PASS | Aravis 0.8、GI、OpenCV、NumPy 可加载 |
+| 预览环境 | PASS | GTK/Cairo 可加载，显示服务可连接；本次未验证鼠标事件 |
+| AUBO RPC | FAIL | `192.168.34.10:30004` 超时，本机路由源地址为 `10.42.30.90` |
+| GigE 相机 | FAIL | Aravis 无法连接 `192.168.34.55`，未进入取帧阶段 |
+| USB 相机 [0] | PASS | 单帧 `1920×1080` |
+| Windows SDK 平台、TCP 服务、力传感器 | SKIP | 平台不匹配、未启用可选端口检查、显式跳过力采集 |
+
+离线自检通过。无硬件回归测试覆盖日志隔离、子进程崩溃/超时、相机参数恢复失败、离线不访问硬件、多 USB 索引去重及非法参数：
+
+```bash
+/usr/bin/python3 -m unittest discover -s tests -v
+```
+
+Windows 分支尚未实机验证；本次未检查外接索引 4，也未读取力数据。上方 2026-11-08 的设备成功记录保留供历史对照。
+
+## 故障排查
+
+1. **依赖失败**：先根据对应目录 README 安装依赖。Linux GI 推荐系统 Python；本地 Aravis 库缺失时运行 `bash socket_camera_linux/install_local.sh` 或安装系统包。
+2. **网络设备无法连接**：先检查供电、网线及 `ip route get 192.168.34.55`、`ip route get 192.168.34.10`；确认直连网卡具有正确网段和路由。此前的网络修复不保证当前会话仍生效，自检不会自动更改网络。
+3. **设备可发现但取帧失败**：关闭占用相机的 MVS/取流进程，检查触发模式、包大小与防火墙；必要时使用 `--timeout 15`。发现、打开与成功取帧是不同阶段。
+4. **USB 无法打开**：核对索引、设备权限及占用；应用入口使用 `--index`，自检使用 `--usb-index`。Linux 预览使用 `usb_camera_linux/`，Windows 使用 `usb_camera/`。
+5. **力传感器失败**：在 Windows x64 / Python 3.12 环境确认 ART-DAQ 驱动、`Dev1` 和三路输入。Linux 平台跳过不代表设备正常。
+6. **TCP 服务失败**：仅旧 TCP 调用链需要该服务，本仓库只有客户端；GigE 直连不需要 `--check-camera-service`。
 
 ## 相机内参与标定记录
 
@@ -131,7 +174,7 @@ Linux 已通过 Aravis 读取相机型号、序列号并完成实际取流，但
 
 ### 已尝试的读取方式与结论
 
-- **仓库搜索**：未找到可用的相机矩阵或畸变系数文件；`usb_camera/shijue.py` 中的 `calibrate()` 只是返回输入坐标，不执行相机标定。
+- **仓库搜索**：未找到可用的相机矩阵或畸变系数文件。
 - **USB 直接读取**：`lsusb -v -d 2993:0858` 可读取上述身份信息。描述符的 `wObjectiveFocalLengthMin`、`wObjectiveFocalLengthMax`、`wOcularFocalLength` 均为 0，未提供可用焦距信息；不能将这些 0 写成 `fx/fy`。通过 `VIDIOC_QUERYCTRL` 枚举到曝光、增益、亮度、白平衡等控制项，未发现相机矩阵或畸变系数控制项。这仅说明当前公开接口没有暴露内参，不排除厂商私有接口或独立标定文件。
 - **公开资料查询**：按 `icspring`、USB ID `2993:0858` 和内参关键词检索，未找到可核实且匹配该设备与分辨率的厂商标定数据。海康型号现已读取为 `MV-CU060-10GC`，镜头及设备专属标定文件尚未确认，不能套用网络参数。
 - **GigE 内参状态**：Aravis 已完成设备打开和取流；尚未完成标定参数节点或设备专属标定文件检查，因此不能判断设备是否保存了出厂内参。
@@ -180,3 +223,15 @@ bash socket_camera_linux/run.sh --output socket_camera_linux/captures/frame.png
 2026-11-08 验证结果：真实相机连续采集 100 帧，3072×2048、BayerRG8，约 14.7 FPS；GTK 窗口连续取流 30 帧，约 14.4 FPS；GTK 信号注入验证上滚、下滚、平滑滚动及中键复位。上述帧率为本次测试值，不是性能保证。真实样张保存在 `socket_camera_linux/captures/verified_frame.png`（本机文件，未提交 Git）；画面偏暗，曝光和增益保留原值，内参尚未标定。
 
 安装依赖、本地库下载、配置参数及网络排查见 [Linux 取流说明](socket_camera_linux/README.md)。
+
+## 当前外接 USB 相机指令
+
+从仓库根目录执行，Linux 自动匹配 `usb_camera_linux/config.json` 中的设备身份：
+
+```bash
+/usr/bin/python3 usb_camera_linux/control.py stream
+/usr/bin/python3 usb_camera_linux/control.py capture --output usb_camera_linux/captures/external.png
+/usr/bin/python3 self_check.py --skip-robot --skip-gige --skip-force --timeout 10
+```
+
+2026-11-10 实拍确认画面含物体轮廓，640×480，偏暗但非全黑；默认入口连续采集 30 帧成功，约 16.6 FPS。10 项回归测试通过，显式索引 0 被身份校验拒绝。设备缺失时直接失败，不自动回退内置相机。自检会丢弃启动帧并报告灰度统计；接近全黑或缺少灰度变化记为 FAIL，需排查遮挡/照明/曝光，不据此推断设备身份。Windows 需现场确认索引并显式使用 `--index` / `--usb-index`，Linux 索引 4 不可直接套用。
