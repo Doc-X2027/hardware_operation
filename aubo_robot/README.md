@@ -1,5 +1,6 @@
 # AUBO 机械臂
 
+默认登录密码已恢复为原始值 `123456`，无需设置密码环境变量；`control.py` 可通过 `--password` 显式覆盖。
 本目录来自 `E:\Code_file\pythonProject_IRS`。当前控制器地址已按现场信息更新为 `192.168.34.10:30004`，具体设备若不同，用 `--ip`、`--port` 指定。
 
 ## 环境
@@ -11,7 +12,6 @@
 从仓库根目录在 PowerShell 中运行：
 
 ```powershell
-$env:AUBO_PASSWORD = '<控制器密码>'
 py -3.12 aubo_robot/control.py status
 py -3.12 aubo_robot/control.py power-on
 py -3.12 aubo_robot/control.py startup
@@ -19,7 +19,6 @@ py -3.12 aubo_robot/control.py status
 py -3.12 aubo_robot/control.py move-joint 0 -15 100 25 90 0 --speed 20 --acc 20
 py -3.12 aubo_robot/control.py move-line 0.551 -0.124 0.419 -3.134 0.004 1.567 --speed 0.05 --acc 0.05
 py -3.12 aubo_robot/control.py power-off
-Remove-Item Env:AUBO_PASSWORD
 ```
 
 以上运动数值来自原 SDK 示例，仅用于说明参数格式，必须按现场标定结果替换。`move-joint` 的六个关节角单位是度，速度单位是度/秒，加速度是度/秒²；`move-line` 的位置单位是米，姿态单位是弧度，速度单位是米/秒，加速度是米/秒²。运动前需确认状态为 `Running`。`power-on` 与 `startup` 是两个独立命令，运动命令不会自动上电。运动等待默认 60 秒，可用 `--timeout` 调整。超时后应检查控制器状态，不要直接重复下发运动。

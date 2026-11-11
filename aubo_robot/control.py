@@ -30,7 +30,7 @@ def main():
     parser.add_argument("--ip", default=os.getenv("AUBO_IP", "192.168.34.10"))
     parser.add_argument("--port", type=int, default=30004)
     parser.add_argument("--user", default=os.getenv("AUBO_USER", "aubo"))
-    parser.add_argument("--password", default=os.getenv("AUBO_PASSWORD"))
+    parser.add_argument("--password", default="123456")
     parser.add_argument("--timeout", type=float, default=60.0, help="运动等待超时，秒")
     actions = parser.add_subparsers(dest="action", required=True)
     for name in ("status", "power-on", "startup", "power-off"):
@@ -45,7 +45,7 @@ def main():
     line.add_argument("--acc", type=float, default=0.05, help="直线加速度，米/秒²")
     args = parser.parse_args()
     if not args.password:
-        parser.error("请通过 AUBO_PASSWORD 设置控制器密码")
+        parser.error("控制器密码不能为空")
     if args.timeout <= 0:
         parser.error("--timeout 必须大于 0")
     if args.action == "move-joint":
