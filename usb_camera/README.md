@@ -1,6 +1,6 @@
 # Windows USB 相机拍摄与取流
 
-本目录使用 OpenCV 原生窗口，面向 Windows；Linux 请使用独立目录 [usb_camera_linux](../usb_camera_linux/README.md)，其 GTK 预览与 `socket_camera_linux` 一致。拍摄和无窗口取流代码跨平台，图形预览按平台分别实现，两个目录可独立运行。
+本目录使用 OpenCV 原生窗口，面向 Windows；Linux 请使用独立目录 [usb_camera_linux](https://github.com/Doc-X2027/hardware_operation/blob/feat/linux_plugin/usb_camera_linux/README.md)，其 GTK 预览与 `socket_camera_linux` 一致。拍摄和无窗口取流代码跨平台，图形预览按平台分别实现，两个目录可独立运行。
 
 ## 安装及运行
 
@@ -42,6 +42,7 @@ Windows 滚轮使用 OpenCV HighGUI 鼠标回调；Linux GTK 版本还支持触�
 从仓库根目录执行，检查 USB 依赖及单帧读取：
 
 ```powershell
+# 综合自检请切换至 feat/linux_plugin 分支后运行
 py -3.12 self_check.py --skip-robot --skip-gige --skip-force --usb-index 1
 ```
 
