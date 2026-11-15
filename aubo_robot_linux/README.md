@@ -19,6 +19,29 @@ SDK 从 `/home/liam/miniconda3/envs/lerobot/lib/python3.12/site-packages/` 复�
 
 ## 使用
 
+### Modbus 夹爪
+
+`gripper.py` 通过机械臂 RPC 的 `getRegisterControl()` 控制已有信号。
+请先在示教器确认：信号 `Modbus_0`，设备 `DEVICE_0`，类型“寄存器输出”（SDK 类型 3），地址 **10**。
+夹持写入 **0**，断开写入 **1000**。
+
+```bash
+./aubo_robot_linux/run.sh gripper.py status
+./aubo_robot_linux/run.sh gripper.py grip
+./aubo_robot_linux/run.sh gripper.py release
+./aubo_robot_linux/run.sh gripper.py --ip 192.168.34.10 --signal Modbus_0 status
+```
+
+连接参数与 `control.py` 一致，默认密码 `123456`，支持 `--password` 覆盖。
+脚本检查信号名、输出类型及通信错误，再发送一次写入；不会自动重试、上电或启动机械臂。
+设备与地址由控制器已有信号绑定，脚本不创建或修改绑定，也无法通过上述查询核验设备及地址。
+`DEVICE_0` 是示教器设备标签，不作为 TCP 地址或串口路径传给 SDK。
+若信号尚未配置，需先在示教器补齐设备通信参数及信号映射。
+`status` 显示寄存器值和 Modbus 错误码；写入成功只表示控制器接受请求，不证明夹持到位。
+目前仅完成离线验证，真实夹爪动作及控制器版本兼容性需现场验证。
+
+### 机械臂
+
 在仓库根目录执行：
 
 ```bash

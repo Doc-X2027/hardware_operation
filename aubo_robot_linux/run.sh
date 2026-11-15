@@ -9,6 +9,6 @@ fi
 script="${1:-control.py}"
 if [[ $# -gt 0 ]]; then shift; fi
 case "$script" in
-    control.py|read_state.py|check_sdk.py) exec "$python_bin" "$script_dir/$script" "$@" ;;
-    *) echo '用法: run.sh {control.py|read_state.py|check_sdk.py} [参数...]' >&2; exit 2 ;;
+    control.py|gripper.py|read_state.py|check_sdk.py) exec "$python_bin" "$script_dir/$script" "$@" ;;
+    *) echo '用法: run.sh {control.py|gripper.py|read_state.py|check_sdk.py} [参数...]' >&2; exit 2 ;;
 esac
